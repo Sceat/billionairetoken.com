@@ -36,7 +36,7 @@ module.exports = {
 		workboxOptions: {
 			swSrc: './src/sw.js',
 		},
-		themeColor: '#01579B',
+		themeColor: '#212121',
 		appleMobileWebAppCapable: 'yes',
 		iconPaths: {
 			favicon32: 'img/icons/favicon-32x32.png',
