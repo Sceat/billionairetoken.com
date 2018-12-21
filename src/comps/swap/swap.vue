@@ -211,7 +211,7 @@ export default class Swap extends Vue {
             font-weight 500
 
       .coin
-        background rgba(white, .3)
+        background rgba(white, .5)
         position absolute
         z-index 5
         border-radius 50px
