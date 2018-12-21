@@ -17,6 +17,7 @@ footer
   width 100%
   height 100vh
   position fixed
+  top 0
   background #373737
   color #999999
   display flex

@@ -15,6 +15,6 @@ export default loader => [
 	{
 		path: '/swap',
 		name: 'swap',
-		component: () => loader('swap'),
+		component: () => loader('swapPage'),
 	},
 ]

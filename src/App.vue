@@ -17,7 +17,7 @@ export default class App extends Vue { }
 
 <style lang="stylus">
 @require '~@stl/utils'
-@import url('https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800')
+@import url('https://fonts.googleapis.com/css?family=Roboto:100,300,500,900')
 
 :root
   font-size 18px
@@ -25,7 +25,7 @@ export default class App extends Vue { }
 *
   sc-reset()
   sc-disableScollBar()
-  font-family 'Open Sans', sans-serif
+  font-family 'Roboto', sans-serif
   outline none
   scroll-behavior smooth
 
