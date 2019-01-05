@@ -1,0 +1,42 @@
+themeColor = '#212121'
+ogImage = 'https://xbl.netlify.com/img/og/og-image.jpg'
+touchIconSize = '114x114'
+maskIconColor = '#e7a100'
+tileColor = '#ffc40d'
+
+[en]
+title = 'the first super-deflationary, gambling-oriented coin'
+titleTemplate = '''t => t ? `Billionaire Token - ${t}` : 'Billionaire Token' '''
+description = '''Most other coins or tokens have some sort of mining system, but Billionaire Token (XBL) has the exact opposite: It features a deflationary mechanism that destroys some XBL tokens each week via our decentralized Raffle and our decentralized Burner Smart Contracts - this is what will initially provide intrinsic value to the token and differentiate it from the competition. Our Cee-lo Dice and Billionaire Hold'em games will also feature a mechanism that burns tokens, ensuring that the supply will always be diminishing.'''
+ogTitle = 'Billionaire Token - the first super-deflationary, gambling-oriented coin'
+ogTemplate = '''t => t ? `Billionaire Token - ${t}` : 'Billionaire Token' '''
+
+[fr]
+title = 'la première cryptomonnaie déflationniste de paris en ligne'
+titleTemplate = '''t => t ? `Billionaire Token - ${t}` : 'Billionaire Token' '''
+description = '''La plupart des cryptomonnaies sont crées avec le temps via un système de minage, mais Billionaire Token (XBL) fait l'inverse, le nombre total de pièce diminue chaque semaine grâce aux jeux décentralisé comme le Raffle ou les Burner Smart Contracts - ce système permet d'augmenter la valeur de la monnaie avec temps. Nos jeux Cee-lo Dice et Hold'em participeront aussi a la déflation de la monnaie.'''
+ogTitle = 'la première cryptomonnaie déflationniste de paris en ligne'
+ogTemplate = '''t => t ? `Billionaire Token - ${t}` : 'Billionaire Token' '''
+
+[[og]]
+property = 'og:image:width'
+content = '488'
+[[og]]
+property = 'og:image:height'
+content = '931'
+[[og]]
+property = 'og:url'
+content = 'https://billionairetoken.com'
+
+[[tw]]
+name = 'twitter:site'
+content = '@BillionaireTkn'
+[[tw]]
+name = 'twitter:card'
+content = 'summary_large_image'
+[[tw]]
+name = 'twitter:title'
+content = 'Billionaire Token'
+[[tw]]
+name = 'twitter:creator'
+content = '@Hydreio'
