@@ -7,7 +7,8 @@ en:
     rec: "You will receive {eosbl} Token on the {eosnet}"
     fee: "ETH Network fee ({gas}) {fee}"
     all: "All"
-    confirm: "Send"
+    approve: "Approve"
+    register: "Register Swap"
     remaining: "Remaining Balance {balance}"
     rules:
         r1: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
@@ -29,19 +30,21 @@ en:
                 .sep
                 .swapping
                     .eos
-                        input(:placeholder="$t('eos')")
+                        input(:placeholder="$t('eos')" v-model.lazy="recipient_adress" type="text")
                     .amount
-                        input.x(:placeholder="$t('xbl')")
+                        input.x(:placeholder="$t('xbl')" v-model.lazy="amount" :disabled="approved" type="number")
                         span XBL
-                        span(v-t="'all'")
+                        span(v-t="'all'" @click="onAll()")
                     .infos
                         i18n(path="rec")
-                            span(place="eosbl") {{eosbl}} XBL
+                            span(place="eosbl") {{received_xbl}} XBL
                             span(place="eosnet") EOS network
                         i18n(path="fee")
                             span(place="gas") {{gas}} gas
-                            span(place="fee") - {{fee}} ETH
-                    .confirm(v-t="'confirm'")
+                            span(place="fee") - {{eth_fee}} ETH
+                    .confirm
+                      .approve(v-t="'approve'" @click="onApprove()")
+                      .register(v-t="'register'" @click="onRegisterSwap()")
                 .coin(v-for="c in 7" :key="c" :class="'c'+c")
 </template>
 
@@ -50,15 +53,35 @@ import { Vue, Component } from 'vue-property-decorator'
 
 @Component
 export default class Swap extends Vue {
-  eosbl = 0
-  gas = 0
-  fee = 0
 
+  recipient_adress = ''
+  amount = ''
+
+  received_xbl = 0
+  gas = 0
+  eth_fee = 0
+
+  approved = false // used to lock the amount input
+
+  onAll() {
+
+  }
+
+  onApprove() {
+    this.approved = true
+
+  }
+
+  onRegisterSwap() {
+
+  }
 }
 </script>
 
-
 <style lang="stylus" scoped>
+input[type=number]::-webkit-inner-spin-button
+  -webkit-appearance none
+
 .swap
   margin-bottom 200px
   position absolute
@@ -66,6 +89,7 @@ export default class Swap extends Vue {
   z-index 1
   width 100%
   height 100vh
+  overflow hidden
   background linear-gradient(17deg, lighten(#ffb400, 20%), darken(#ffb400, 20%))
 
   .middle
@@ -102,6 +126,7 @@ export default class Swap extends Vue {
         display flex
         flex-flow column nowrap
         align-items center
+        transform scale(.9)
 
       .rule
         display flex
@@ -168,20 +193,25 @@ export default class Swap extends Vue {
           cursor pointer
 
       .confirm
-        text-align center
-        align-self center
-        width 200px
-        padding .5em 0
-        border 2px solid #212121
-        border-radius 3px
-        text-transform uppercase
-        margin-top 2em
-        cursor pointer
-        transition all 125ms ease-in-out
+        display flex
+        flex-flow row nowrap
+        justify-content space-evenly
 
-        &:hover
-          background #212121
-          color #ffb400
+        >div
+          text-align center
+          align-self center
+          width 200px
+          padding .5em 0
+          border 2px solid #212121
+          border-radius 3px
+          text-transform uppercase
+          margin-top 2em
+          cursor pointer
+          transition all 125ms ease-in-out
+
+          &:hover
+            background #212121
+            color #ffb400
 
       .infos
         display flex
@@ -211,7 +241,7 @@ export default class Swap extends Vue {
             font-weight 500
 
       .coin
-        background rgba(white, .5)
+        background rgba(black, .6)
         position absolute
         z-index 5
         border-radius 50px
