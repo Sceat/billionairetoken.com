@@ -63,20 +63,33 @@ export default class Swap extends Vue {
 
   approved = false // used to lock the amount input
 
-  mounted(){
-    alert("Testing testing 1...2....3..")
+  mounted()
+  {
+    //alert("Testing testing 1...2....3..")
+
+    if (typeof web3 !== 'undefined')
+    {
+    console.log('MetaMask is installed')
+    } 
+    else
+    {
+      console.log('MetaMask is not installed')
+    }
   }
 
-  onAll() {
+  onAll()
+  {
 
   }
 
-  onApprove() {
+  onApprove() 
+  {
     this.approved = true
 
   }
 
-  onRegisterSwap() {
+  onRegisterSwap() 
+  {
 
   }
 }
