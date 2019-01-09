@@ -54,44 +54,63 @@ import { Vue, Component } from 'vue-property-decorator'
 @Component
 export default class Swap extends Vue {
 
-  recipient_adress = ''
-  amount = ''
+    recipient_adress = ''
+    amount = ''
 
-  received_xbl = 0
-  gas = 0
-  eth_fee = 0
+    received_xbl = 0
+    gas = 0
+    eth_fee = 0
 
-  approved = false // used to lock the amount input
+    approved = false // used to lock the amount input
 
-  mounted()
-  {
-    //alert("Testing testing 1...2....3..")
-
-    if (typeof web3 !== 'undefined')
+    mounted()
     {
-    console.log('MetaMask is installed')
-    } 
-    else
-    {
-      console.log('MetaMask is not installed')
+    // This shit runs every time the web page is loaded.
+
+        if (typeof web3 !== 'undefined')
+        {
+            console.log('MetaMask is installed')
+            // Metamask is installed, check if it is locked:
+            web3.eth.getAccounts(function(err, accounts)
+            {
+                if (err != null) 
+                {
+                    console.log(err)
+                }
+                else if (accounts.length === 0) 
+                {
+                    console.log('MetaMask is locked')
+                    // We should inform the user here that he needs to fucking unlock Metamask if he wants to swap.
+                }
+                else 
+                {
+                    console.log('MetaMask is unlocked')
+                }
+            });
+        } 
+        else
+        {
+            console.log('MetaMask is not installed')
+            // Alert the user tell him to install fucking metamask, why don't they even have it at this point?
+        }
+
     }
-  }
 
-  onAll()
-  {
+    onAll()
+    {
 
-  }
+    }
 
-  onApprove() 
-  {
-    this.approved = true
+    onApprove() 
+    {
+        this.approved = true
 
-  }
+    }
 
-  onRegisterSwap() 
-  {
+    onRegisterSwap() 
+    {
 
-  }
+    }
 }
 </script>
 
