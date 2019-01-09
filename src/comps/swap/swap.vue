@@ -63,6 +63,10 @@ export default class Swap extends Vue {
 
   approved = false // used to lock the amount input
 
+  mounted(){
+    alert("Testing testing 1...2....3..")
+  }
+
   onAll() {
 
   }
