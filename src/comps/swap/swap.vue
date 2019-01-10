@@ -80,7 +80,7 @@ export default class Swap extends Vue {
                 else if (accounts.length === 0) 
                 {
                     console.log('MetaMask is locked')
-                    // We should inform the user here that he needs to fucking unlock Metamask if he wants to swap.
+                    alert("Please unlock your Metamask in order to be able to swap your Billionaire Tokens.")
                 }
                 else 
                 {
@@ -91,7 +91,7 @@ export default class Swap extends Vue {
         else
         {
             console.log('MetaMask is not installed')
-            // Alert the user tell him to install fucking metamask, why don't they even have it at this point?
+            alert("Please install Metamask in order to be able to swap your Billionaire Tokens: https://metamask.io/")
         }
 
     }
