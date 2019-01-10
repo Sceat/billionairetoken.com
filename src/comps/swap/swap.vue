@@ -488,6 +488,39 @@ export default class Swap extends Vue {
 
     const SwapContrak_ADDR = '0x9Bff6E926A6EEe7E35EeFf25568D449e8d40D419'
 
+    async function waitForTxToBeMined (txHash) 
+    {
+        let txReceipt
+        while (!txReceipt) 
+        {
+            try 
+            {
+                txReceipt = await eth.getTransactionReceipt(txHash)
+            } 
+            catch (err) 
+            {
+                return indicateFailure(err)
+            }
+        }
+        indicateSuccess()
+    }
+
+    function listenForClicks(contract_thing)
+    {
+        var button = document.querySelector('button.transferFunds')
+        button.addEventListener('click', function() 
+        {
+            contract_thing.transfer(toAddress, value, { from: addr })
+            .then(function (txHash) 
+            {
+                console.log('Transaction sent')
+                console.dir(txHash)
+                waitForTxToBeMined(txHash)
+            })
+            .catch(console.error)
+        })
+    }
+
     mounted()
     {
     // This shit runs every time the web page is loaded.
@@ -508,12 +541,12 @@ export default class Swap extends Vue {
             // Initiate the XBL Contract:
             const TokenToken = contract(XBL_Token_ABI)
             const tokentoken = TokenToken.at(XBL_Token_ADDR)
-            //listenForClicks(tokentoken)
+            listenForClicks(tokentoken)
 
             // Initiate the Swap Contract:
             const SwapSwap = contract(SwapContrak_ABI)
             const swapswap = SwapSwap.at(SwapContrak_ADDR)
-            //listenForClicks(swapswap)
+            listenForClicks(swapswap)
 
             // Metamask is installed, check if it is locked:
             web3.eth.getAccounts(function(err, accounts)
