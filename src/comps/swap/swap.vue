@@ -69,6 +69,15 @@ export default class Swap extends Vue {
 
         if (typeof web3 !== 'undefined')
         {
+            const Eth = require('ethjs-query')
+            const EthContract = require('ethjs-contract')
+
+            function startApp(web3) 
+            {
+                const eth = new Eth(web3.currentProvider)
+                const contract = new EthContract(eth)
+                initContract(contract)
+            }
             console.log('MetaMask is installed')
             // Metamask is installed, check if it is locked:
             web3.eth.getAccounts(function(err, accounts)
