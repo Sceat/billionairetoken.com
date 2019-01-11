@@ -539,7 +539,7 @@ export default class Swap extends Vue {
                 else if (accounts.length === 0) 
                 {
                     console.log('MetaMask is locked')
-                    alert("Please unlocKTEST your Metamask in order to be able to swap your Billionaire Tokens.")
+                    alert("Please unlock your Metamask in order to be able to swap your Billionaire Tokens.")
                 }
                 else 
                 {
