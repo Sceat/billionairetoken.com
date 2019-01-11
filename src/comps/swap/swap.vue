@@ -54,16 +54,7 @@ import { Vue, Component } from 'vue-property-decorator'
 @Component
 export default class Swap extends Vue {
 
-    recipient_adress = ''
-    amount = ''
-
-    received_xbl = 0
-    gas = 0
-    eth_fee = 0
-
-    approved = false // used to lock the amount input
-
-    const XBL_Token_ABI = [
+    XBL_Token_ABI = [
     {
         "constant": true,
         "inputs": [],
@@ -373,9 +364,7 @@ export default class Swap extends Vue {
         "type": "event"
     }]
 
-    const XBL_Token_ADDR = '0x82D01395cD1Ac118207c3963cF07d5c106C96773'
-
-    const SwapContrak_ABI = [
+    SwapContrak_ABI = [
     {
         "constant": true,
         "inputs": [],
@@ -486,9 +475,19 @@ export default class Swap extends Vue {
         "type": "constructor"
     }]
 
-    const SwapContrak_ADDR = '0x9Bff6E926A6EEe7E35EeFf25568D449e8d40D419'
+    SwapContrak_ADDR = '0x9Bff6E926A6EEe7E35EeFf25568D449e8d40D419'
+    XBL_Token_ADDR = '0x82D01395cD1Ac118207c3963cF07d5c106C96773'
 
-    async function waitForTxToBeMined (txHash) 
+    recipient_adress = ''
+    amount = ''
+
+    received_xbl = 0
+    gas = 0
+    eth_fee = 0
+
+    approved = false // used to lock the amount input
+
+    async waitForTxToBeMined (txHash) 
     {
         let txReceipt
         while (!txReceipt) 
@@ -505,22 +504,6 @@ export default class Swap extends Vue {
         indicateSuccess()
     }
 
-    function listenForClicks(contract_thing)
-    {
-        var button = document.querySelector('button.transferFunds')
-        button.addEventListener('click', function() 
-        {
-            contract_thing.transfer(toAddress, value, { from: addr })
-            .then(function (txHash) 
-            {
-                console.log('Transaction sent')
-                console.dir(txHash)
-                waitForTxToBeMined(txHash)
-            })
-            .catch(console.error)
-        })
-    }
-
     mounted()
     {
     // This shit runs every time the web page is loaded.
@@ -530,23 +513,21 @@ export default class Swap extends Vue {
             console.log('MetaMask is installed')
 
             // Contract stuff:
-            const Eth = require('ethjs-query')
-            const EthContract = require('ethjs-contract')
+            Eth = require('ethjs-query')
+            EthContract = require('ethjs-contract')
 
             // Initiate the contract instance that we'll use to create references to our XBL and Swap contracts:
-            const eth = new Eth(web3.currentProvider)
-            const token_contract = new EthContract(eth)
+            eth = new Eth(web3.currentProvider)
+            token_contract = new EthContract(eth)
             initContract(contract)
 
             // Initiate the XBL Contract:
-            const TokenToken = contract(XBL_Token_ABI)
-            const tokentoken = TokenToken.at(XBL_Token_ADDR)
-            listenForClicks(tokentoken)
+            TokenToken = contract(XBL_Token_ABI)
+            tokentoken = TokenToken.at(XBL_Token_ADDR)
 
             // Initiate the Swap Contract:
-            const SwapSwap = contract(SwapContrak_ABI)
-            const swapswap = SwapSwap.at(SwapContrak_ADDR)
-            listenForClicks(swapswap)
+            SwapSwap = contract(SwapContrak_ABI)
+            swapswap = SwapSwap.at(SwapContrak_ADDR)
 
             // Metamask is installed, check if it is locked:
             web3.eth.getAccounts(function(err, accounts)
@@ -580,13 +561,21 @@ export default class Swap extends Vue {
     }
 
     onApprove() 
-    {
+    {   // call approve on the XBL token with the SwapContrak address as receiver of the "approve"
         this.approved = true
+        tokentoken.approve(SwapContrak_ADDR, 555, { from: addr })
+            .then(function (txHash) // There are no functions inside this script (?) Whatever.
+            {
+                console.log('Transaction sent')
+                console.dir(txHash)
+                waitForTxToBeMined(txHash)
+            })
+            .catch(console.error)
 
     }
 
     onRegisterSwap() 
-    {
+    {   // call registerSwap for the amount that is in the field
 
     }
 }
