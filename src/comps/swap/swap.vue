@@ -50,6 +50,8 @@ en:
 
 <script>
 import { Vue, Component } from 'vue-property-decorator'
+import Eth from "ethjs-query";
+import EthContract from 'ethjs-contract';
 
 @Component
 export default class Swap extends Vue {
@@ -484,8 +486,12 @@ export default class Swap extends Vue {
     received_xbl = 0
     gas = 0
     eth_fee = 0
+    big_dick = 1000000000000000000 // 18 Zeroes, used to get the real XBL amount.
 
     approved = false // used to lock the amount input
+
+    tokentoken = ''
+    swapswap = ''
 
     async waitForTxToBeMined (txHash) 
     {
@@ -512,22 +518,17 @@ export default class Swap extends Vue {
         {
             console.log('MetaMask is installed')
 
-            // Contract stuff:
-            Eth = require('ethjs-query')
-            EthContract = require('ethjs-contract')
-
             // Initiate the contract instance that we'll use to create references to our XBL and Swap contracts:
-            eth = new Eth(web3.currentProvider)
-            token_contract = new EthContract(eth)
-            initContract(contract)
+            const eth = new Eth(web3.currentProvider)
+            const contract = new EthContract(eth)
 
             // Initiate the XBL Contract:
-            TokenToken = contract(XBL_Token_ABI)
-            tokentoken = TokenToken.at(XBL_Token_ADDR)
+            const TokenToken = contract(this.XBL_Token_ABI)
+            this.tokentoken = TokenToken.at(this.XBL_Token_ADDR)
 
             // Initiate the Swap Contract:
-            SwapSwap = contract(SwapContrak_ABI)
-            swapswap = SwapSwap.at(SwapContrak_ADDR)
+            const SwapSwap = contract(this.SwapContrak_ABI)
+            this.swapswap = SwapSwap.at(this.SwapContrak_ADDR)
 
             // Metamask is installed, check if it is locked:
             web3.eth.getAccounts(function(err, accounts)
@@ -539,7 +540,7 @@ export default class Swap extends Vue {
                 else if (accounts.length === 0) 
                 {
                     console.log('MetaMask is locked')
-                    alert("Please unlocKTEST your Metamask in order to be able to swap your Billionaire Tokens.")
+                    alert("Please unlock your Metamask in order to be able to swap your Billionaire Tokens.")
                 }
                 else 
                 {
@@ -563,15 +564,17 @@ export default class Swap extends Vue {
     onApprove() 
     {   // call approve on the XBL token with the SwapContrak address as receiver of the "approve"
         this.approved = true
-        tokentoken.approve(SwapContrak_ADDR, 555, { from: addr })
-            .then(function (txHash) // There are no functions inside this script (?) Whatever.
+        const xbl_quantity = parseInt(this.amount, 10)* this.big_dick
+
+        this.tokentoken.approve(this.SwapContrak_ADDR, xbl_quantity, { from: '0x77061BAaBCCE2E9B08125bbEe6f62a498D32F056' }) 
+            .then(function (txHash)
             {
                 console.log('Transaction sent')
                 console.dir(txHash)
                 waitForTxToBeMined(txHash)
             })
             .catch(console.error)
-
+        console.log(xbl_quantity +" XBL has been approved")
     }
 
     onRegisterSwap() 
