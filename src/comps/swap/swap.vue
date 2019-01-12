@@ -571,7 +571,7 @@ export default class Swap extends Vue {
             {
                 console.log('Transaction sent')
                 console.dir(txHash)
-                waitForTxToBeMined(txHash)
+                this.waitForTxToBeMined(txHash)
             })
             .catch(console.error)
         console.log(xbl_quantity +" XBL has been approved")
