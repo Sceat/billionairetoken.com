@@ -31,7 +31,7 @@ en:
                     .eos
                         input(:placeholder="$t('eos')" v-model.lazy="recipient_adress" type="text")
                     .amount
-                        input.x(:placeholder="$t('xbl')" v-model.lazy="amount" :disabled="approved" type="number")
+                        input.x(:placeholder="$t('xbl')" v-model="amount" v-on:change="onAmountUpdate()" v-on:keydown="onAmountUpdate()" v-on:keyup="onAmountUpdate()" v-on:paste="onAmountUpdate()" :disabled="approved" type="number")
                         span XBL
                         span(v-t="'all'" @click="onAll()")
                     .infos
@@ -517,6 +517,18 @@ export default class Swap extends Vue {
         }
     }
 
+    onAmountUpdate()
+    {
+        if (this.amount > 5000)
+        {
+            this.received_xbl = parseInt(this.amount) + ((5 / 100) * parseInt(this.amount));
+        }
+        else
+        {
+            this.received_xbl = this.amount
+        }
+    }
+
     mounted()
     {
     // This shit runs every time the web page is loaded.
@@ -590,7 +602,10 @@ export default class Swap extends Vue {
                     const readable_balance = full_balance.substring(0, balance.balance.toString().length-18)
                     console.dir("XBL Balance: "+readable_balance);
                     this.amount = readable_balance
-                    this.received_xbl = parseInt(readable_balance) + ((5 / 100) * parseInt(readable_balance));
+                    if (parseInt(readable_balance) > 5000)
+                    {
+                        this.received_xbl = parseInt(readable_balance) + ((5 / 100) * parseInt(readable_balance));
+                    }
                 });
             }
         }
