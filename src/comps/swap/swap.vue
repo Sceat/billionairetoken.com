@@ -1,7 +1,7 @@
 <i18n>
 en:
-    title: "XBL moved to the EOS Network"
-    sub: "Swap your tokens now"
+    title: "XBL is moving to the EOS Main Net"
+    sub: "So go ahead and swap your tokens now!"
     eos: "EOS recipient adress"
     xbl: "Amount"
     rec: "You will receive {eosbl} Token on the {eosnet}"
@@ -11,10 +11,10 @@ en:
     register: "Register Swap"
     remaining: "Remaining Balance {balance}"
     rules:
-        r1: "Your account address: "
-        r2: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
-        r3: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
-        r4: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+        r1: "Make sure you are using Google Chrome or The Brave Browser and have the Metamask browser plug-in installed and unlocked."
+        r2: "Make sure your Billionaire Tokens (XBL) are in your Metamask account. Make sure you double-check your EOS Main net account name."
+        r3: "Enter the amount of XBL you wish to swap to the EOS Main net and click Approve! Then wait for the transaction to be mined."
+        r4: "Enter your EOS Main Net account name, double-checking it, and click Register Swap! Make sure the account name is correct, we can not help you if it is not."
 </i18n>
 
 <template lang="pug">
@@ -517,13 +517,17 @@ export default class Swap extends Vue {
         const tx_status = parseInt(txReceipt.status, 16)
         console.log("TX Status: "+tx_status)
         //indicateSuccess()
+        // registerSwap:
+        //  0 = success
+        // -1 = allowance mismatch
+        // -2 = balance mismatch
         if ((txType == "approve") && (tx_status == 1))
         {
             alert("Your approve transaction has been confirmed. You can now register your tokens.")
         }
         if ((txType == "register") && (tx_status == 0))
         {
-            alert("success")
+            alert("Congratulations! You have succesfully registered your XBL to swap on the EOS main net!")
         }
         if ((txType == "register") && (tx_status == -1))
         {
@@ -589,7 +593,7 @@ export default class Swap extends Vue {
     }
 
     onApprove() 
-    {   // call approve on the XBL token with the SwapContrak address as receiver of the "approve"
+    {   // Call approve on the XBL token with the SwapContrak address as receiver of the "approve"
         if (this.metamask_installed == true)
         {
             this.metamask_user_address = web3.eth.accounts[0]
@@ -604,7 +608,7 @@ export default class Swap extends Vue {
                 .then(txHash =>
                 {
                     console.log('Transaction sent...')
-                    alert('Approve transaction has been sent. Please wait for another notification when it has confirmed....')
+                    alert('The Approve transaction has been sent. Please wait for another notification when it has confirmed....')
                     console.dir("TX ID: "+txHash)
                     this.waitForTxToBeMined(txHash, "approve")
                 })
@@ -640,6 +644,18 @@ export default class Swap extends Vue {
             alert("EOS account names are exactly 12 characters in length. Please double-check your account name as we can not help you in case this is incorrect.")
             return
         }
+        // Everything checks out. Let's ahead and register the swap:
+        const xbl_quantity = web3.toWei(parseInt(this.amount, 10), 'ether')
+        this.swapswap.registerSwap(xbl_quantity, this.recipient_adress, { from: this.metamask_user_address }) 
+            .then(txHash =>
+            {
+                console.log('Transaction sent...')
+                alert('The Register transaction has been sent! Please wait for a notification to see the success state after it has been mined.')
+                console.dir("TX ID: "+txHash)
+                this.waitForTxToBeMined(txHash, "register")
+            })
+            .catch(console.error)
+        console.log(this.recipient_adress +" has registered "+xbl_quantity)
 
     }
 }
