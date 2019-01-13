@@ -531,19 +531,6 @@ export default class Swap extends Vue {
 
     mounted()
     {
-    // This shit runs every time the web page is loaded.
-
-//        setInterval(function()
-//        {
-//            console.log("amount = "+this.amount)
-//            console.log("old_amount = "+this.old_amount)
-//            if (this.amount != this.old_amount)
-//            {
-//                this.received_xbl = parseInt(this.amount) + ((5 / 100) * parseInt(this.amount));
-//                this.amount = this.old_amount
-//            }
-//        }, 3000);
-
         if (typeof web3 !== 'undefined')
         {
             console.log('MetaMask is installed')
@@ -576,16 +563,12 @@ export default class Swap extends Vue {
                     console.log('MetaMask is unlocked')
                 }
             });
-            // Perhaps should make a looping function that keeps refreshing the account: 
-            //                       https://ethereum.stackexchange.com/questions/26244/how-can-i-get-my-address-via-web3
         } 
         else
         {
             console.log('MetaMask is not installed')
             alert("Please install Metamask in order to be able to swap your Billionaire Tokens: https://metamask.io/")
         }
-
-
     }
 
     onAll()
@@ -605,6 +588,10 @@ export default class Swap extends Vue {
                     if (parseInt(readable_balance) > 5000)
                     {
                         this.received_xbl = parseInt(readable_balance) + ((5 / 100) * parseInt(readable_balance));
+                    }
+                    else
+                    {
+                        this.received_xbl = this.amount
                     }
                 });
             }
