@@ -4,9 +4,8 @@ en:
     sub: "So go ahead and swap your tokens now!"
     eos: "EOS recipient adress"
     xbl: "Amount"
-    rec: "You will receive {eosbl} Token on the {eosnet}"
-    fee: "ETH Network fee ({gas}) {fee}"
-    all: "All"
+    rec: "You will receive {eosbl} tokens on the {eosnet}"
+    all: "EVERYTHING"
     approve: "Approve"
     register: "Register Swap"
     remaining: "Remaining Balance {balance}"
@@ -39,9 +38,6 @@ en:
                         i18n(path="rec")
                             span(place="eosbl") {{received_xbl}} XBL
                             span(place="eosnet") EOS network
-                        i18n(path="fee")
-                            span(place="gas") {{gas}} gas
-                            span(place="fee") - {{eth_fee}} ETH
                     .confirm
                       .approve(v-t="'approve'" @click="onApprove()")
                       .register(v-t="'register'" @click="onRegisterSwap()")
@@ -482,6 +478,7 @@ export default class Swap extends Vue {
 
     recipient_adress = ''
     amount = ''
+    old_amount = ''
 
     received_xbl = 0
     gas = 0
@@ -504,44 +501,36 @@ export default class Swap extends Vue {
         let txReceipt
         while (!txReceipt) 
         {
-            //try 
-            //{
             txReceipt = await this.eth.getTransactionReceipt(txHash)
-            //} 
-            //catch (err) 
-            //{
-                //return indicateFailure(err)
-            //}
         }
         console.log(txReceipt)
         const tx_status = parseInt(txReceipt.status, 16)
         console.log("TX Status: "+tx_status)
-        //indicateSuccess()
-        // registerSwap:
-        //  0 = success
-        // -1 = allowance mismatch
-        // -2 = balance mismatch
+
         if ((txType == "approve") && (tx_status == 1))
         {
             alert("Your approve transaction has been confirmed. You can now register your tokens.")
         }
-        if ((txType == "register") && (tx_status == 0))
+        if ((txType == "register") && (tx_status == 1))
         {
-            alert("Congratulations! You have succesfully registered your XBL to swap on the EOS main net!")
-        }
-        if ((txType == "register") && (tx_status == -1))
-        {
-            alert("balance mismatch?")
-        }
-        if ((txType == "register") && (tx_status == -2))
-        {
-            alert("approve mismatch?")
+            alert("Your register transaction has been mined. If everything went well, your XBL should be gone from your wallet.")
         }
     }
 
     mounted()
     {
     // This shit runs every time the web page is loaded.
+
+//        setInterval(function()
+//        {
+//            console.log("amount = "+this.amount)
+//            console.log("old_amount = "+this.old_amount)
+//            if (this.amount != this.old_amount)
+//            {
+//                this.received_xbl = parseInt(this.amount) + ((5 / 100) * parseInt(this.amount));
+//                this.amount = this.old_amount
+//            }
+//        }, 3000);
 
         if (typeof web3 !== 'undefined')
         {
@@ -589,7 +578,22 @@ export default class Swap extends Vue {
 
     onAll()
     {
+        if (this.metamask_installed == true)
+        {
+            this.metamask_user_address = web3.eth.accounts[0]
 
+            if (this.metamask_user_address != null)
+            {
+                this.tokentoken.balanceOf(this.metamask_user_address, (error, balance) => 
+                {
+                    const full_balance = balance.balance.toString()
+                    const readable_balance = full_balance.substring(0, balance.balance.toString().length-18)
+                    console.dir("XBL Balance: "+readable_balance);
+                    this.amount = readable_balance
+                    this.received_xbl = parseInt(readable_balance) + ((5 / 100) * parseInt(readable_balance));
+                });
+            }
+        }
     }
 
     onApprove() 
