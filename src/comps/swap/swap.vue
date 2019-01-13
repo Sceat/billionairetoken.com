@@ -11,7 +11,7 @@ en:
     register: "Register Swap"
     remaining: "Remaining Balance {balance}"
     rules:
-        r1: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+        r1: "Your account address: "
         r2: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
         r3: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
         r4: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
@@ -486,28 +486,53 @@ export default class Swap extends Vue {
     received_xbl = 0
     gas = 0
     eth_fee = 0
-    big_dick = 1000000000000000000 // 18 Zeroes, used to get the real XBL amount.
 
     approved = false // used to lock the amount input
 
     tokentoken = ''
     swapswap = ''
 
-    async waitForTxToBeMined (txHash) 
+    // Initiate the contract instance that we'll use to create references to our XBL and Swap contracts:
+    eth = new Eth(web3.currentProvider)
+    contract = new EthContract(this.eth)
+
+    metamask_user_address = null // The user account address
+    metamask_installed = false
+
+    async waitForTxToBeMined(txHash, txType) 
     {
         let txReceipt
         while (!txReceipt) 
         {
-            try 
-            {
-                txReceipt = await eth.getTransactionReceipt(txHash)
-            } 
-            catch (err) 
-            {
-                return indicateFailure(err)
-            }
+            //try 
+            //{
+            txReceipt = await this.eth.getTransactionReceipt(txHash)
+            //} 
+            //catch (err) 
+            //{
+                //return indicateFailure(err)
+            //}
         }
-        indicateSuccess()
+        console.log(txReceipt)
+        const tx_status = parseInt(txReceipt.status, 16)
+        console.log("TX Status: "+tx_status)
+        //indicateSuccess()
+        if ((txType == "approve") && (tx_status == 1))
+        {
+            alert("Your approve transaction has been confirmed. You can now register your tokens.")
+        }
+        if ((txType == "register") && (tx_status == 0))
+        {
+            alert("success")
+        }
+        if ((txType == "register") && (tx_status == -1))
+        {
+            alert("balance mismatch?")
+        }
+        if ((txType == "register") && (tx_status == -2))
+        {
+            alert("approve mismatch?")
+        }
     }
 
     mounted()
@@ -517,17 +542,16 @@ export default class Swap extends Vue {
         if (typeof web3 !== 'undefined')
         {
             console.log('MetaMask is installed')
-
-            // Initiate the contract instance that we'll use to create references to our XBL and Swap contracts:
-            const eth = new Eth(web3.currentProvider)
-            const contract = new EthContract(eth)
+            this.metamask_installed = true
+            this.metamask_user_address = web3.eth.accounts[0]
+            console.log("Account: "+this.metamask_user_address)
 
             // Initiate the XBL Contract:
-            const TokenToken = contract(this.XBL_Token_ABI)
+            const TokenToken = this.contract(this.XBL_Token_ABI)
             this.tokentoken = TokenToken.at(this.XBL_Token_ADDR)
 
             // Initiate the Swap Contract:
-            const SwapSwap = contract(this.SwapContrak_ABI)
+            const SwapSwap = this.contract(this.SwapContrak_ABI)
             this.swapswap = SwapSwap.at(this.SwapContrak_ADDR)
 
             // Metamask is installed, check if it is locked:
@@ -540,19 +564,22 @@ export default class Swap extends Vue {
                 else if (accounts.length === 0) 
                 {
                     console.log('MetaMask is locked')
-                    alert("Please unlock your Metamask in order to be able to swap your Billionaire Tokens.")
+                    alert("Please unlock your Metamask and refresh the page in order to be able to swap your Billionaire Tokens.")
                 }
                 else 
                 {
                     console.log('MetaMask is unlocked')
                 }
             });
+            // Perhaps should make a looping function that keeps refreshing the account: 
+            //                       https://ethereum.stackexchange.com/questions/26244/how-can-i-get-my-address-via-web3
         } 
         else
         {
             console.log('MetaMask is not installed')
             alert("Please install Metamask in order to be able to swap your Billionaire Tokens: https://metamask.io/")
         }
+
 
     }
 
@@ -563,22 +590,56 @@ export default class Swap extends Vue {
 
     onApprove() 
     {   // call approve on the XBL token with the SwapContrak address as receiver of the "approve"
-        this.approved = true
-        const xbl_quantity = parseInt(this.amount, 10)* this.big_dick
+        if (this.metamask_installed == true)
+        {
+            this.metamask_user_address = web3.eth.accounts[0]
+            console.log("Account: "+this.metamask_user_address)
+        }
+        if ((this.amount != '') && (this.metamask_user_address != null) && (this.metamask_installed == true))
+        {  
+            const xbl_quantity = web3.toWei(parseInt(this.amount, 10), 'ether')
 
-        this.tokentoken.approve(this.SwapContrak_ADDR, xbl_quantity, { from: '0x77061BAaBCCE2E9B08125bbEe6f62a498D32F056' }) 
-            .then(function (txHash)
-            {
-                console.log('Transaction sent')
-                console.dir(txHash)
-                this.waitForTxToBeMined(txHash)
-            })
-            .catch(console.error)
-        console.log(xbl_quantity +" XBL has been approved")
+            this.approved = true
+            this.tokentoken.approve(this.SwapContrak_ADDR, xbl_quantity, { from: this.metamask_user_address }) 
+                .then(txHash =>
+                {
+                    console.log('Transaction sent...')
+                    alert('Approve transaction has been sent. Please wait for another notification when it has confirmed....')
+                    console.dir("TX ID: "+txHash)
+                    this.waitForTxToBeMined(txHash, "approve")
+                })
+                .catch(console.error)
+            console.log(xbl_quantity +" XBL is being sent for approval")
+        }
+
+        if ((this.amount == '') && (this.metamask_user_address != null) && (this.metamask_installed == true))
+        {
+            alert("Please enter the XBL amount you wish to swap and click the Approve button first.")
+        }
+
+        if ((this.metamask_user_address == null) && (this.metamask_installed == true))
+        {
+            alert("Please unlock your metamask account!")
+        }
+
+        if (this.metamask_installed != true)
+        {
+            alert("Please install Metamask!")
+        }
     }
 
     onRegisterSwap() 
-    {   // call registerSwap for the amount that is in the field
+    {   // Call registerSwap for the amount that is in the "amount" field.
+        if (this.approved != true)
+        {
+            alert("Please click Approve first!")
+            return
+        }
+        if ((this.approve = true) && (this.recipient_adress.length != 12))
+        {
+            alert("EOS account names are exactly 12 characters in length. Please double-check your account name as we can not help you in case this is incorrect.")
+            return
+        }
 
     }
 }
