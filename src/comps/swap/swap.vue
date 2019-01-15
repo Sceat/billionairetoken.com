@@ -10,8 +10,8 @@ en:
     register: "Register Swap"
     remaining: "Remaining Balance {balance}"
     rules:
-        r1: "Make sure you are using Google Chrome or The Brave Browser and have the Metamask browser plug-in installed and unlocked."
-        r2: "Make sure your Billionaire Tokens (XBL) are in your Metamask account. Make sure you double-check your EOS Main net account name."
+        r1: "Make sure you are using <b>Google Chrome</b> or <b>The Brave Browser</b> and have the <b>Metamask</b> browser plug-in installed and unlocked."
+        r2: "Make sure your Billionaire Tokens (XBL) are in your Metamask account. Make sure you <b>double-check</b> your EOS Main net account name."
         r3: "Enter the amount of XBL you wish to swap to the EOS Main net and click Approve! Then wait for the transaction to be mined."
         r4: "Enter your EOS Main Net account name, double-checking it, and click Register Swap! Make sure the account name is correct, we can not help you if it is not."
 </i18n>
@@ -24,8 +24,8 @@ en:
             .container
                 .guidelines
                     .rule(v-for="r in 4" :key="r")
-                        span {{r}}&nbsp| 
-                        p(v-t="'rules.r'+r")
+                        span {{r}}| 
+                        p(v-html="$t('rules.r'+r)")
                 .sep
                 .swapping
                     .eos
@@ -36,7 +36,7 @@ en:
                         span(v-t="'all'" @click="onAll()")
                     .infos
                         i18n(path="rec")
-                            span(place="eosbl") {{received_xbl}} XBL
+                            span(place="eosbl") {{receivedXbl}} XBL
                             span(place="eosnet") EOS network
                     .confirm
                       .approve(v-t="'approve'" @click="onApprove()")
@@ -45,7 +45,7 @@ en:
 </template>
 
 <script>
-	import { Vue, Component } from "vue-property-decorator"
+	import { Vue, Component, Watch } from "vue-property-decorator"
 	import Eth from "ethjs-query"
 	import EthContract from "ethjs-contract"
 	import {
@@ -61,15 +61,14 @@ en:
 
 	function delay(ms) {
 		return new Promise(function (resolve) {
-			setTimeout(resolve, ms);
-		});
+			setTimeout(resolve, ms)
+		})
 	}
 
 	@Component
 	export default class Swap extends Vue {
 		recipient_adress = ""
 		amount = ""
-		old_amount = ""
 
 		received_xbl = 0
 		gas = 0
@@ -82,6 +81,10 @@ en:
 
 		metamask_user_address = null // The user account address
 		metamask_installed = false
+
+		get receivedXbl() {
+			return isNaN(this.received_xbl) ? 0 : this.received_xbl
+		}
 
 		async waitForTxToBeMined(txHash, txType) {
 			let txReceipt = undefined
@@ -96,9 +99,11 @@ en:
 			else if (txType === "register" && tx_status === 1) alert("Your register transaction has been mined. If everything went well, your XBL should be gone from your wallet.")
 		}
 
-		onAmountUpdate() {
-			if (this.amount > 5000) this.received_xbl = parseInt(this.amount) + (5 / 100) * parseInt(this.amount)
-			else this.received_xbl = this.amount
+		@Watch('amount')
+		onAmountUpdate(amount) {
+			amount = parseInt(amount)
+			if (amount > 5000) this.received_xbl = amount + (5 / 100) * amount
+			else this.received_xbl = `${amount}`
 		}
 
 		mounted() {
@@ -109,12 +114,10 @@ en:
 				console.log("Account: " + this.metamask_user_address)
 
 				// Initiate the XBL Contract:
-				const TokenToken = this.contract(XBL_TOKEN_ABI)
-				this.tokentoken = TokenToken.at(XBL_TOKEN_ADRESS)
+				this.tokentoken = contract(XBL_TOKEN_ABI).at(XBL_TOKEN_ADRESS)
 
 				// Initiate the Swap Contract:
-				const SwapSwap = this.contract(SWAP_CONTRACT_ABI)
-				this.swapswap = SwapSwap.at(SWAP_CONTRACT_ADRESS)
+				this.swapswap = contract(SWAP_CONTRACT_ABI).at(SWAP_CONTRACT_ADRESS)
 
 				// Metamask is installed, check if it is locked:
 				web3.eth.getAccounts(function (err, accounts) {
@@ -131,359 +134,311 @@ en:
 		}
 
 		onAll() {
-			if (this.metamask_installed) {
-				this.metamask_user_address = web3.eth.accounts[0]
 
-				if (this.metamask_user_address) {
-					this.tokentoken.balanceOf(this.metamask_user_address,
-						(error, balance) => {
-							const full_balance = balance.balance.toString()
-							const readable_balance = full_balance.substring(
-								0,
-								balance.balance.toString().length - 18
-							)
-							console.dir("XBL Balance: " + readable_balance)
-							this.amount = readable_balance
-							if (parseInt(readable_balance) > 5000)
-								this.received_xbl = parseInt(readable_balance) + (5 / 100) * parseInt(readable_balance)
-							else this.received_xbl = this.amount
-						}
-					)
-				}
+			if (!this.metamask_installed) {
+				alert("Please install Metamask in order to be able to swap your Billionaire Tokens: https://metamask.io/")
+				return
 			}
-		}
+			this.metamask_user_address = web3.eth.accounts[0]
 
-		onApprove() {
-			// Call approve on the XBL token with the SwapContrak address as receiver of the "approve"
-			if (this.metamask_installed) {
-				this.metamask_user_address = web3.eth.accounts[0]
-				console.log("Account: " + this.metamask_user_address)
-			}
-			if (this.amount && this.metamask_user_address && this.metamask_installed) {
-				const xbl_quantity = web3.toWei(parseInt(this.amount, 10), "ether")
-				this.approved = true
-				this.tokentoken
-					.approve(this.SwapContrak_ADDR, xbl_quantity, {
-						from: this.metamask_user_address
-					})
-					.then(txHash => {
-						console.log("Transaction sent...")
-						alert(
-							"The Approve transaction has been sent. Please wait for another notification when it has confirmed...."
+			if (this.metamask_user_address) {
+				this.tokentoken.balanceOf(this.metamask_user_address,
+					(error, balance) => {
+						const full_balance = balance.balance.toString()
+						const readable_balance = full_balance.substring(
+							0,
+							balance.balance.toString().length - 18
 						)
-						console.dir("TX ID: " + txHash)
-						this.waitForTxToBeMined(txHash, "approve")
-					})
-					.catch(console.error)
-				console.log(xbl_quantity + " XBL is being sent for approval")
-			}
-
-			if (
-				this.amount == "" &&
-				this.metamask_user_address != null &&
-				this.metamask_installed == true
-			) {
-				alert(
-					"Please enter the XBL amount you wish to swap and click the Approve button first."
+						console.dir("XBL Balance: " + readable_balance)
+						this.amount = readable_balance
+						if (parseInt(readable_balance) > 5000)
+							this.received_xbl = parseInt(readable_balance) + (5 / 100) * parseInt(readable_balance)
+						else this.received_xbl = this.amount
+					}
 				)
 			}
-
-			if (this.metamask_user_address == null && this.metamask_installed == true) {
-				alert("Please unlock your metamask account!")
-			}
-
-			if (this.metamask_installed != true) {
-				alert("Please install Metamask!")
-			}
 		}
 
-		onRegisterSwap() {
+		async onApprove() {
+			// Call approve on the XBL token with the SwapContrak address as receiver of the "approve"
+			if (!this.metamask_installed) {
+				alert("Please install Metamask!")
+				return
+			}
+
+			this.metamask_user_address = web3.eth.accounts[0]
+			console.log("Account:", this.metamask_user_address)
+
+			if (!this.metamask_user_address) {
+				alert("Please unlock your metamask account!")
+				return
+			}
+
+			if (!this.amount) {
+				alert("Please enter the XBL amount you wish to swap")
+				return
+			}
+
+			const xbl_quantity = web3.toWei(parseInt(this.amount, 10), "ether")
+			this.approved = true
+			try {
+				const txHash = await this.tokentoken.approve(SWAP_CONTRACT_ADRESS, xbl_quantity, { from: this.metamask_user_address })
+				console.log("Transaction sent...")
+				alert("The Approve transaction has been sent. Please wait for another notification when it has confirmed....")
+				console.dir("TX ID: " + txHash)
+				await waitForTxToBeMined(txHash, "approve")
+			} catch (error) {
+				console.error(error)
+			}
+			console.log(xbl_quantity + " XBL is being sent for approval")
+		}
+
+		async onRegisterSwap() {
 			// Call registerSwap for the amount that is in the "amount" field.
-			if (this.approved != true) {
+			if (!this.approved) {
 				alert("Please click Approve first!")
 				return
 			}
-			if ((this.approve = true) && this.recipient_adress.length != 12) {
-				alert(
-					"EOS account names are exactly 12 characters in length. Please double-check your account name as we can not help you in case this is incorrect."
-				)
+
+			if (this.approve && this.recipient_adress.length !== 12) {
+				alert("EOS account names are exactly 12 characters in length. Please double-check your account name as we can not help you in case this is incorrect.")
 				return
 			}
 			// Everything checks out. Let's ahead and register the swap:
 			const xbl_quantity = web3.toWei(parseInt(this.amount, 10), "ether")
-			this.swapswap
-				.registerSwap(xbl_quantity, this.recipient_adress, {
-					from: this.metamask_user_address
-				})
-				.then(txHash => {
-					console.log("Transaction sent...")
-					alert(
-						"The Register transaction has been sent! Please wait for a notification to see the success state after it has been mined."
-					)
-					console.dir("TX ID: " + txHash)
-					this.waitForTxToBeMined(txHash, "register")
-				})
-				.catch(console.error)
+			try {
+				const txHash = await this.swapswap.registerSwap(xbl_quantity, this.recipient_adress, { from: this.metamask_user_address })
+				console.log("Transaction sent...")
+				alert("The Register transaction has been sent! Please wait for a notification to see the success state after it has been mined.")
+				console.dir("TX ID: " + txHash)
+				await this.waitForTxToBeMined(txHash, "register")
+			} catch (error) {
+				console.error(error)
+			}
 			console.log(this.recipient_adress + " has registered " + xbl_quantity)
 		}
 	}
 </script>
 
 <style lang="stylus" scoped>
-input[type=number]::-webkit-inner-spin-button {
-	-webkit-appearance: none;
-}
+input[type=number]::-webkit-inner-spin-button
+	-webkit-appearance none
 
-.swap {
-	margin-bottom: 200px;
-	position: absolute;
-	top: 0;
-	z-index: 1;
-	width: 100%;
-	height: 100vh;
-	overflow: hidden;
-	background: linear-gradient(17deg, lighten(#ffb400, 20%), darken(#ffb400, 20%));
+.swap
+	margin-bottom 200px
+	position absolute
+	top 0
+	z-index 1
+	min-height 760px
+	width 100%
+	height 100vh
+	overflow hidden
+	background linear-gradient(17deg, lighten(#ffb400, 20%), darken(#ffb400, 20%))
 
-	.middle {
-		display: flex;
-		flex-flow: column nowrap;
-		width: 100%;
-		height: 100%;
-		padding-top: 142px;
-		justify-content: center;
+	.middle
+		display flex
+		flex-flow column nowrap
+		width 100%
+		height 100%
+		padding-top 142px
+		justify-content center
 
-		h1 {
-			text-align: center;
-			font-size: 2em;
-			text-transform: uppercase;
-			padding-top: 1em;
-			font-weight: 900;
-		}
+		h1
+			text-align center
+			font-size 2em
+			text-transform uppercase
+			padding-top 1em
+			font-weight 900
 
-		h2 {
-			text-align: center;
-			font-weight: 500;
-		}
+		h2
+			text-align center
+			font-weight 500
 
-		.container {
-			width: 100%;
-			height: 100%;
-			display: flex;
-			flex-flow: row nowrap;
-			justify-content: space-evenly;
-			align-items: center;
-			position: relative;
+		.container
+			width 100%
+			height 100%
+			display flex
+			flex-flow row nowrap
+			justify-content space-evenly
+			align-items center
+			position relative
 
-			.guidelines {
-				max-width: 45%;
-				min-width: 30%;
-				display: flex;
-				flex-flow: column nowrap;
-				align-items: center;
-				transform: scale(0.9);
-			}
+			.guidelines
+				max-width 45%
+				min-width 30%
+				display flex
+				flex-flow column nowrap
+				align-items center
+				transform scale(.9)
 
-			.rule {
-				display: flex;
-				flex-flow: row nowrap;
+				.rule
+					display flex
+					flex-flow row nowrap
 
-				span {
-					display: flex;
-					flex: 0 0 max-content;
-					align-items: center;
-					font-size: 2.2em;
-				}
+					span
+						display flex
+						flex 0 0 max-content
+						align-items center
+						font-size 2.2em
 
-				p {
-					font-weight: 300;
-					text-transform: uppercase;
-					font-size: 1.2rem;
-					color: rgba(#212121, 0.6);
-					padding: 1em;
-				}
-			}
+					p
+						font-weight 300
+						font-size 1.2rem
+						color rgba(#212121, .6)
+						padding 1em
 
-			.sep {
-				width: 1px;
-				height: 70%;
-				background: linear-gradient(to top, lighten(#212121, 10%), darken(#212121, 10%));
-			}
+						b
+							color white
 
-			.swapping {
-				width: 45%;
-				display: flex;
-				flex-flow: column nowrap;
-				justify-content: center;
-			}
+			.sep
+				width 1px
+				height 70%
+				background linear-gradient(to top, lighten(#212121, 10%), darken(#212121, 10%))
 
-			input {
-				background: none;
-				border: none;
-				border-bottom: 2px solid #212121;
-				width: 80%;
-				height: 50px;
-				font-weight: 900;
-				font-size: 1.5em;
-				padding: 0 0.3em;
-				margin: 0.5em 0;
+			.swapping
+				width 45%
+				display flex
+				flex-flow column nowrap
+				justify-content center
 
-				&.x {
-					padding: 0 2em 0 0.3em;
-				}
+			input
+				background none
+				border none
+				border-bottom 2px solid #212121
+				width 80%
+				height 50px
+				font-weight 900
+				font-size 1.5em
+				padding 0 .3em
+				margin .5em 0
 
-				&::placeholder {
-					color: darken(#ffb400, 30%);
-					font-weight: 500;
-				}
-			}
+				&.x
+					padding 0 2em 0 .3em
 
-			.amount {
-				display: flex;
-				flex-flow: row nowrap;
-				align-items: center;
+				&::placeholder
+					color darken(#ffb400, 30%)
+					font-weight 500
 
-				>span:first-of-type {
-					color: rgba(#212121, 0.8);
-					font-weight: 900;
-					transform: translateX(-33px);
-				}
+			.amount
+				display flex
+				flex-flow row nowrap
+				align-items center
 
-				>span:last-of-type {
-					padding: 10px;
-					background: #212121;
-					color: #ffb400;
-					border-radius: 2px;
-					font-weight: 500;
-					cursor: pointer;
-				}
-			}
+				>span:first-of-type
+					color rgba(#212121, .8)
+					font-weight 900
+					transform translateX(-33px)
 
-			.confirm {
-				display: flex;
-				flex-flow: row nowrap;
-				justify-content: space-evenly;
+				>span:last-of-type
+					padding 10px
+					background #212121
+					color #ffb400
+					border-radius 2px
+					font-weight 500
+					cursor pointer
 
-				>div {
-					text-align: center;
-					align-self: center;
-					width: 200px;
-					padding: 0.5em 0;
-					border: 2px solid #212121;
-					border-radius: 3px;
-					text-transform: uppercase;
-					margin-top: 2em;
-					cursor: pointer;
-					transition: all 125ms ease-in-out;
+			.confirm
+				display flex
+				flex-flow row nowrap
+				justify-content space-evenly
 
-					&:hover {
-						background: #212121;
-						color: #ffb400;
-					}
-				}
-			}
+				>div
+					text-align center
+					align-self center
+					width 200px
+					padding .5em 0
+					border 2px solid #212121
+					border-radius 3px
+					text-transform uppercase
+					margin-top 2em
+					cursor pointer
+					transition all 125ms ease-in-out
 
-			.infos {
-				display: flex;
-				flex-flow: column nowrap;
-				padding: 2em 0;
-				text-align: end;
-				padding-right: 3em;
+					&:hover
+						background #212121
+						color #ffb400
 
-				>:first-child {
-					font-weight: 300;
+			.infos
+				display flex
+				flex-flow column nowrap
+				padding 2em 0
+				text-align end
+				padding-right 3em
 
-					>span:first-of-type {
-						color: darken(#F57F17, 40%);
-						font-weight: 500;
-					}
+				>:first-child
+					font-weight 300
 
-					>span:last-of-type {
-						font-weight: 500;
-					}
-				}
+					>span:first-of-type
+						color darken(#F57F17, 40%)
+						font-weight 500
 
-				>:last-child {
-					font-weight: 300;
+					>span:last-of-type
+						font-weight 500
 
-					>span:first-of-type {
-						font-weight: 100;
-					}
+				>:last-child
+					font-weight 300
 
-					>span:last-of-type {
-						color: darken(#F57F17, 40%);
-						font-weight: 500;
-					}
-				}
-			}
+					>span:first-of-type
+						font-weight 100
 
-			.coin {
-				background: rgba(black, 0.6);
-				position: absolute;
-				z-index: 5;
-				border-radius: 50px;
+					>span:last-of-type
+						color darken(#F57F17, 40%)
+						font-weight 500
 
-				&.c1 {
-					transform: translateY(10vh);
-					width: 10px;
-					height: 10px;
-					animation: coin 5s ease-in infinite;
-				}
+			.coin
+				background rgba(black, .6)
+				position absolute
+				z-index 5
+				border-radius 50px
 
-				&.c2 {
-					transform: translateY(-10vh);
-					width: 2px;
-					height: 2px;
-					animation: coin 3s ease-in 3s infinite;
-				}
+				&.c1
+					transform translateY(10vh)
+					width 10px
+					height 10px
+					animation coin 5s ease-in infinite
 
-				&.c3 {
-					transform: translateY(5vh);
-					width: 5px;
-					height: 5px;
-					animation: coin 8s ease-in 1s infinite;
-				}
+				&.c2
+					transform translateY(-10vh)
+					width 2px
+					height 2px
+					animation coin 3s ease-in 3s infinite
 
-				&.c4 {
-					transform: translateY(30vh);
-					width: 12px;
-					height: 12px;
-					animation: coin 4s ease-in infinite;
-				}
+				&.c3
+					transform translateY(5vh)
+					width 5px
+					height 5px
+					animation coin 8s ease-in 1s infinite
 
-				&.c5 {
-					transform: translateY(-5vh);
-					width: 10px;
-					height: 10px;
-					animation: coin 6.2s ease-in 200ms infinite;
-				}
+				&.c4
+					transform translateY(30vh)
+					width 12px
+					height 12px
+					animation coin 4s ease-in infinite
 
-				&.c6 {
-					transform: translateY(-32vh);
-					width: 8px;
-					height: 8px;
-					animation: coin 3.2s ease-in infinite;
-				}
+				&.c5
+					transform translateY(-5vh)
+					width 10px
+					height 10px
+					animation coin 6.2s ease-in 200ms infinite
 
-				&.c7 {
-					transform: translateY(-20vh);
-					width: 10px;
-					height: 10px;
-					animation: coin 4.2s ease-in infinite;
-				}
-			}
-		}
-	}
-}
+				&.c6
+					transform translateY(-32vh)
+					width 8px
+					height 8px
+					animation coin 3.2s ease-in infinite
 
-@keyframes coin {
-	from {
-		left: 0;
-		opacity: 1;
-	}
+				&.c7
+					transform translateY(-20vh)
+					width 10px
+					height 10px
+					animation coin 4.2s ease-in infinite
 
-	to {
-		left: 100%;
-		opacity: 0.3;
-	}
-}
+@keyframes coin
+	from
+		left 0
+		opacity 1
+
+	to
+		left 100%
+		opacity .3
 </style>
