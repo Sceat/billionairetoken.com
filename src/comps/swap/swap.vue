@@ -31,7 +31,7 @@ en:
                     .eos
                         input(:placeholder="$t('eos')" v-model.lazy="recipient_adress" type="text")
                     .amount
-                        input.x(:placeholder="$t('xbl')" v-model="amount" v-on:change="onAmountUpdate()" v-on:keydown="onAmountUpdate()" v-on:keyup="onAmountUpdate()" v-on:paste="onAmountUpdate()" :disabled="approved" type="number")
+                        input.x(:placeholder="$t('xbl')" v-model="amount" :disabled="approved" type="number")
                         span XBL
                         span(v-t="'all'" @click="onAll()")
                     .infos
@@ -45,844 +45,450 @@ en:
 </template>
 
 <script>
-import { Vue, Component } from 'vue-property-decorator'
-import Eth from "ethjs-query";
-import EthContract from 'ethjs-contract';
+	import { Vue, Component } from "vue-property-decorator"
+	import Eth from "ethjs-query"
+	import EthContract from "ethjs-contract"
+	import {
+		SWAP_CONTRACT_ADRESS,
+		XBL_TOKEN_ADRESS,
+		SWAP_CONTRACT_ABI,
+		XBL_TOKEN_ABI
+	} from "@core/token/constant"
 
-@Component
-export default class Swap extends Vue {
+	// Initiate the contract instance that we'll use to create references to our XBL and Swap contracts:
+	const eth = new Eth(web3.currentProvider)
+	const contract = new EthContract(eth)
 
-    XBL_Token_ABI = [
-    {
-        "constant": true,
-        "inputs": [],
-        "name": "name",
-        "outputs": [
-            {
-                "name": "",
-                "type": "string"
-            }
-        ],
-        "payable": false,
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "constant": false,
-        "inputs": [
-            {
-                "name": "_spender",
-                "type": "address"
-            },
-            {
-                "name": "_amount",
-                "type": "uint256"
-            }
-        ],
-        "name": "approve",
-        "outputs": [
-            {
-                "name": "success",
-                "type": "bool"
-            }
-        ],
-        "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "constant": true,
-        "inputs": [],
-        "name": "totalSupply",
-        "outputs": [
-            {
-                "name": "l_totalSupply",
-                "type": "uint256"
-            }
-        ],
-        "payable": false,
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "constant": false,
-        "inputs": [
-            {
-                "name": "_from",
-                "type": "address"
-            },
-            {
-                "name": "_to",
-                "type": "address"
-            },
-            {
-                "name": "_amount",
-                "type": "uint256"
-            }
-        ],
-        "name": "transferFrom",
-        "outputs": [
-            {
-                "name": "success",
-                "type": "bool"
-            }
-        ],
-        "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "constant": true,
-        "inputs": [],
-        "name": "decimals",
-        "outputs": [
-            {
-                "name": "",
-                "type": "uint8"
-            }
-        ],
-        "payable": false,
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "constant": false,
-        "inputs": [
-            {
-                "name": "_value",
-                "type": "uint256"
-            }
-        ],
-        "name": "burn",
-        "outputs": [
-            {
-                "name": "success",
-                "type": "bool"
-            }
-        ],
-        "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "constant": true,
-        "inputs": [
-            {
-                "name": "_owner",
-                "type": "address"
-            }
-        ],
-        "name": "balanceOf",
-        "outputs": [
-            {
-                "name": "balance",
-                "type": "uint256"
-            }
-        ],
-        "payable": false,
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "constant": false,
-        "inputs": [
-            {
-                "name": "_from",
-                "type": "address"
-            },
-            {
-                "name": "_value",
-                "type": "uint256"
-            }
-        ],
-        "name": "burnFrom",
-        "outputs": [
-            {
-                "name": "success",
-                "type": "bool"
-            }
-        ],
-        "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "constant": true,
-        "inputs": [],
-        "name": "owner",
-        "outputs": [
-            {
-                "name": "",
-                "type": "address"
-            }
-        ],
-        "payable": false,
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "constant": true,
-        "inputs": [],
-        "name": "symbol",
-        "outputs": [
-            {
-                "name": "",
-                "type": "string"
-            }
-        ],
-        "payable": false,
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "constant": false,
-        "inputs": [
-            {
-                "name": "_to",
-                "type": "address"
-            },
-            {
-                "name": "_amount",
-                "type": "uint256"
-            }
-        ],
-        "name": "transfer",
-        "outputs": [
-            {
-                "name": "success",
-                "type": "bool"
-            }
-        ],
-        "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "constant": true,
-        "inputs": [],
-        "name": "totalBurned",
-        "outputs": [
-            {
-                "name": "l_totalBurned",
-                "type": "uint256"
-            }
-        ],
-        "payable": false,
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "constant": true,
-        "inputs": [
-            {
-                "name": "_owner",
-                "type": "address"
-            },
-            {
-                "name": "_spender",
-                "type": "address"
-            }
-        ],
-        "name": "allowance",
-        "outputs": [
-            {
-                "name": "remaining",
-                "type": "uint256"
-            }
-        ],
-        "payable": false,
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "constructor"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": true,
-                "name": "_from",
-                "type": "address"
-            },
-            {
-                "indexed": true,
-                "name": "_to",
-                "type": "address"
-            },
-            {
-                "indexed": false,
-                "name": "_value",
-                "type": "uint256"
-            }
-        ],
-        "name": "Transfer",
-        "type": "event"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": true,
-                "name": "_owner",
-                "type": "address"
-            },
-            {
-                "indexed": true,
-                "name": "_spender",
-                "type": "address"
-            },
-            {
-                "indexed": false,
-                "name": "_value",
-                "type": "uint256"
-            }
-        ],
-        "name": "Approval",
-        "type": "event"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": true,
-                "name": "from",
-                "type": "address"
-            },
-            {
-                "indexed": false,
-                "name": "value",
-                "type": "uint256"
-            }
-        ],
-        "name": "Burn",
-        "type": "event"
-    }]
+	function delay(ms) {
+		return new Promise(function (resolve) {
+			setTimeout(resolve, ms);
+		});
+	}
 
-    SwapContrak_ABI = [
-    {
-        "constant": true,
-        "inputs": [],
-        "name": "swap_address",
-        "outputs": [
-            {
-                "name": "",
-                "type": "address"
-            }
-        ],
-        "payable": false,
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "constant": true,
-        "inputs": [],
-        "name": "register_counter",
-        "outputs": [
-            {
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "payable": false,
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "constant": true,
-        "inputs": [],
-        "name": "XBLContract_addr",
-        "outputs": [
-            {
-                "name": "",
-                "type": "address"
-            }
-        ],
-        "payable": false,
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "constant": true,
-        "inputs": [
-            {
-                "name": "eosio_username",
-                "type": "string"
-            }
-        ],
-        "name": "getBalanceByEOSIO_USERNAME",
-        "outputs": [
-            {
-                "name": "eosio_balance",
-                "type": "uint256"
-            }
-        ],
-        "payable": false,
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "constant": false,
-        "inputs": [
-            {
-                "name": "xbl_amount",
-                "type": "uint256"
-            },
-            {
-                "name": "eosio_username",
-                "type": "string"
-            }
-        ],
-        "name": "registerSwap",
-        "outputs": [
-            {
-                "name": "STATUS_CODE",
-                "type": "int256"
-            }
-        ],
-        "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "constant": true,
-        "inputs": [
-            {
-                "name": "target",
-                "type": "uint256"
-            }
-        ],
-        "name": "getEOSIO_USERNAME",
-        "outputs": [
-            {
-                "name": "eosio_username",
-                "type": "string"
-            }
-        ],
-        "payable": false,
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "constructor"
-    }]
+	@Component
+	export default class Swap extends Vue {
+		recipient_adress = ""
+		amount = ""
+		old_amount = ""
 
-    SwapContrak_ADDR = '0x9Bff6E926A6EEe7E35EeFf25568D449e8d40D419'
-    XBL_Token_ADDR = '0x82D01395cD1Ac118207c3963cF07d5c106C96773'
+		received_xbl = 0
+		gas = 0
+		eth_fee = 0
 
-    recipient_adress = ''
-    amount = ''
-    old_amount = ''
+		approved = false // used to lock the amount input
 
-    received_xbl = 0
-    gas = 0
-    eth_fee = 0
+		tokentoken = ""
+		swapswap = ""
 
-    approved = false // used to lock the amount input
+		metamask_user_address = null // The user account address
+		metamask_installed = false
 
-    tokentoken = ''
-    swapswap = ''
+		async waitForTxToBeMined(txHash, txType) {
+			let txReceipt = undefined
+			while (!txReceipt) {
+				txReceipt = await eth.getTransactionReceipt(txHash)
+				await delay(100)
+			}
 
-    // Initiate the contract instance that we'll use to create references to our XBL and Swap contracts:
-    eth = new Eth(web3.currentProvider)
-    contract = new EthContract(this.eth)
+			const tx_status = parseInt(txReceipt.status, 16)
 
-    metamask_user_address = null // The user account address
-    metamask_installed = false
+			if (txType === "approve" && tx_status === 1) alert("Your approve transaction has been confirmed. You can now register your tokens.")
+			else if (txType === "register" && tx_status === 1) alert("Your register transaction has been mined. If everything went well, your XBL should be gone from your wallet.")
+		}
 
-    async waitForTxToBeMined(txHash, txType) 
-    {
-        let txReceipt
-        while (!txReceipt) 
-        {
-            txReceipt = await this.eth.getTransactionReceipt(txHash)
-        }
-        console.log(txReceipt)
-        const tx_status = parseInt(txReceipt.status, 16)
-        console.log("TX Status: "+tx_status)
+		onAmountUpdate() {
+			if (this.amount > 5000) this.received_xbl = parseInt(this.amount) + (5 / 100) * parseInt(this.amount)
+			else this.received_xbl = this.amount
+		}
 
-        if ((txType == "approve") && (tx_status == 1))
-        {
-            alert("Your approve transaction has been confirmed. You can now register your tokens.")
-        }
-        if ((txType == "register") && (tx_status == 1))
-        {
-            alert("Your register transaction has been mined. If everything went well, your XBL should be gone from your wallet.")
-        }
-    }
+		mounted() {
+			if (typeof web3 !== "undefined") {
+				console.log("MetaMask is installed")
+				this.metamask_installed = true
+				this.metamask_user_address = web3.eth.accounts[0]
+				console.log("Account: " + this.metamask_user_address)
 
-    onAmountUpdate()
-    {
-        if (this.amount > 5000)
-        {
-            this.received_xbl = parseInt(this.amount) + ((5 / 100) * parseInt(this.amount));
-        }
-        else
-        {
-            this.received_xbl = this.amount
-        }
-    }
+				// Initiate the XBL Contract:
+				const TokenToken = this.contract(XBL_TOKEN_ABI)
+				this.tokentoken = TokenToken.at(XBL_TOKEN_ADRESS)
 
-    mounted()
-    {
-        if (typeof web3 !== 'undefined')
-        {
-            console.log('MetaMask is installed')
-            this.metamask_installed = true
-            this.metamask_user_address = web3.eth.accounts[0]
-            console.log("Account: "+this.metamask_user_address)
+				// Initiate the Swap Contract:
+				const SwapSwap = this.contract(SWAP_CONTRACT_ABI)
+				this.swapswap = SwapSwap.at(SWAP_CONTRACT_ADRESS)
 
-            // Initiate the XBL Contract:
-            const TokenToken = this.contract(this.XBL_Token_ABI)
-            this.tokentoken = TokenToken.at(this.XBL_Token_ADDR)
+				// Metamask is installed, check if it is locked:
+				web3.eth.getAccounts(function (err, accounts) {
+					if (err) console.error(err)
+					else if (!accounts.length) {
+						console.log("MetaMask is locked")
+						alert("Please unlock your Metamask and refresh the page in order to be able to swap your Billionaire Tokens.")
+					} else console.log("MetaMask is unlocked")
+				})
+			} else {
+				console.log("MetaMask is not installed")
+				alert("Please install Metamask in order to be able to swap your Billionaire Tokens: https://metamask.io/")
+			}
+		}
 
-            // Initiate the Swap Contract:
-            const SwapSwap = this.contract(this.SwapContrak_ABI)
-            this.swapswap = SwapSwap.at(this.SwapContrak_ADDR)
+		onAll() {
+			if (this.metamask_installed) {
+				this.metamask_user_address = web3.eth.accounts[0]
 
-            // Metamask is installed, check if it is locked:
-            web3.eth.getAccounts(function(err, accounts)
-            {
-                if (err != null) 
-                {
-                    console.log(err)
-                }
-                else if (accounts.length === 0) 
-                {
-                    console.log('MetaMask is locked')
-                    alert("Please unlock your Metamask and refresh the page in order to be able to swap your Billionaire Tokens.")
-                }
-                else 
-                {
-                    console.log('MetaMask is unlocked')
-                }
-            });
-        } 
-        else
-        {
-            console.log('MetaMask is not installed')
-            alert("Please install Metamask in order to be able to swap your Billionaire Tokens: https://metamask.io/")
-        }
-    }
+				if (this.metamask_user_address) {
+					this.tokentoken.balanceOf(this.metamask_user_address,
+						(error, balance) => {
+							const full_balance = balance.balance.toString()
+							const readable_balance = full_balance.substring(
+								0,
+								balance.balance.toString().length - 18
+							)
+							console.dir("XBL Balance: " + readable_balance)
+							this.amount = readable_balance
+							if (parseInt(readable_balance) > 5000)
+								this.received_xbl = parseInt(readable_balance) + (5 / 100) * parseInt(readable_balance)
+							else this.received_xbl = this.amount
+						}
+					)
+				}
+			}
+		}
 
-    onAll()
-    {
-        if (this.metamask_installed == true)
-        {
-            this.metamask_user_address = web3.eth.accounts[0]
+		onApprove() {
+			// Call approve on the XBL token with the SwapContrak address as receiver of the "approve"
+			if (this.metamask_installed == true) {
+				this.metamask_user_address = web3.eth.accounts[0]
+				console.log("Account: " + this.metamask_user_address)
+			}
+			if (
+				this.amount != "" &&
+				this.metamask_user_address != null &&
+				this.metamask_installed == true
+			) {
+				const xbl_quantity = web3.toWei(parseInt(this.amount, 10), "ether")
 
-            if (this.metamask_user_address != null)
-            {
-                this.tokentoken.balanceOf(this.metamask_user_address, (error, balance) => 
-                {
-                    const full_balance = balance.balance.toString()
-                    const readable_balance = full_balance.substring(0, balance.balance.toString().length-18)
-                    console.dir("XBL Balance: "+readable_balance);
-                    this.amount = readable_balance
-                    if (parseInt(readable_balance) > 5000)
-                    {
-                        this.received_xbl = parseInt(readable_balance) + ((5 / 100) * parseInt(readable_balance));
-                    }
-                    else
-                    {
-                        this.received_xbl = this.amount
-                    }
-                });
-            }
-        }
-    }
+				this.approved = true
+				this.tokentoken
+					.approve(this.SwapContrak_ADDR, xbl_quantity, {
+						from: this.metamask_user_address
+					})
+					.then(txHash => {
+						console.log("Transaction sent...")
+						alert(
+							"The Approve transaction has been sent. Please wait for another notification when it has confirmed...."
+						)
+						console.dir("TX ID: " + txHash)
+						this.waitForTxToBeMined(txHash, "approve")
+					})
+					.catch(console.error)
+				console.log(xbl_quantity + " XBL is being sent for approval")
+			}
 
-    onApprove() 
-    {   // Call approve on the XBL token with the SwapContrak address as receiver of the "approve"
-        if (this.metamask_installed == true)
-        {
-            this.metamask_user_address = web3.eth.accounts[0]
-            console.log("Account: "+this.metamask_user_address)
-        }
-        if ((this.amount != '') && (this.metamask_user_address != null) && (this.metamask_installed == true))
-        {  
-            const xbl_quantity = web3.toWei(parseInt(this.amount, 10), 'ether')
+			if (
+				this.amount == "" &&
+				this.metamask_user_address != null &&
+				this.metamask_installed == true
+			) {
+				alert(
+					"Please enter the XBL amount you wish to swap and click the Approve button first."
+				)
+			}
 
-            this.approved = true
-            this.tokentoken.approve(this.SwapContrak_ADDR, xbl_quantity, { from: this.metamask_user_address }) 
-                .then(txHash =>
-                {
-                    console.log('Transaction sent...')
-                    alert('The Approve transaction has been sent. Please wait for another notification when it has confirmed....')
-                    console.dir("TX ID: "+txHash)
-                    this.waitForTxToBeMined(txHash, "approve")
-                })
-                .catch(console.error)
-            console.log(xbl_quantity +" XBL is being sent for approval")
-        }
+			if (this.metamask_user_address == null && this.metamask_installed == true) {
+				alert("Please unlock your metamask account!")
+			}
 
-        if ((this.amount == '') && (this.metamask_user_address != null) && (this.metamask_installed == true))
-        {
-            alert("Please enter the XBL amount you wish to swap and click the Approve button first.")
-        }
+			if (this.metamask_installed != true) {
+				alert("Please install Metamask!")
+			}
+		}
 
-        if ((this.metamask_user_address == null) && (this.metamask_installed == true))
-        {
-            alert("Please unlock your metamask account!")
-        }
-
-        if (this.metamask_installed != true)
-        {
-            alert("Please install Metamask!")
-        }
-    }
-
-    onRegisterSwap() 
-    {   // Call registerSwap for the amount that is in the "amount" field.
-        if (this.approved != true)
-        {
-            alert("Please click Approve first!")
-            return
-        }
-        if ((this.approve = true) && (this.recipient_adress.length != 12))
-        {
-            alert("EOS account names are exactly 12 characters in length. Please double-check your account name as we can not help you in case this is incorrect.")
-            return
-        }
-        // Everything checks out. Let's ahead and register the swap:
-        const xbl_quantity = web3.toWei(parseInt(this.amount, 10), 'ether')
-        this.swapswap.registerSwap(xbl_quantity, this.recipient_adress, { from: this.metamask_user_address }) 
-            .then(txHash =>
-            {
-                console.log('Transaction sent...')
-                alert('The Register transaction has been sent! Please wait for a notification to see the success state after it has been mined.')
-                console.dir("TX ID: "+txHash)
-                this.waitForTxToBeMined(txHash, "register")
-            })
-            .catch(console.error)
-        console.log(this.recipient_adress +" has registered "+xbl_quantity)
-
-    }
-}
+		onRegisterSwap() {
+			// Call registerSwap for the amount that is in the "amount" field.
+			if (this.approved != true) {
+				alert("Please click Approve first!")
+				return
+			}
+			if ((this.approve = true) && this.recipient_adress.length != 12) {
+				alert(
+					"EOS account names are exactly 12 characters in length. Please double-check your account name as we can not help you in case this is incorrect."
+				)
+				return
+			}
+			// Everything checks out. Let's ahead and register the swap:
+			const xbl_quantity = web3.toWei(parseInt(this.amount, 10), "ether")
+			this.swapswap
+				.registerSwap(xbl_quantity, this.recipient_adress, {
+					from: this.metamask_user_address
+				})
+				.then(txHash => {
+					console.log("Transaction sent...")
+					alert(
+						"The Register transaction has been sent! Please wait for a notification to see the success state after it has been mined."
+					)
+					console.dir("TX ID: " + txHash)
+					this.waitForTxToBeMined(txHash, "register")
+				})
+				.catch(console.error)
+			console.log(this.recipient_adress + " has registered " + xbl_quantity)
+		}
+	}
 </script>
 
 <style lang="stylus" scoped>
-input[type=number]::-webkit-inner-spin-button
-  -webkit-appearance none
+input[type=number]::-webkit-inner-spin-button {
+	-webkit-appearance: none;
+}
 
-.swap
-  margin-bottom 200px
-  position absolute
-  top 0
-  z-index 1
-  width 100%
-  height 100vh
-  overflow hidden
-  background linear-gradient(17deg, lighten(#ffb400, 20%), darken(#ffb400, 20%))
+.swap {
+	margin-bottom: 200px;
+	position: absolute;
+	top: 0;
+	z-index: 1;
+	width: 100%;
+	height: 100vh;
+	overflow: hidden;
+	background: linear-gradient(17deg, lighten(#ffb400, 20%), darken(#ffb400, 20%));
 
-  .middle
-    display flex
-    flex-flow column nowrap
-    width 100%
-    height 100%
-    padding-top 142px
-    justify-content center
+	.middle {
+		display: flex;
+		flex-flow: column nowrap;
+		width: 100%;
+		height: 100%;
+		padding-top: 142px;
+		justify-content: center;
 
-    h1
-      text-align center
-      font-size 2em
-      text-transform uppercase
-      padding-top 1em
-      font-weight 900
+		h1 {
+			text-align: center;
+			font-size: 2em;
+			text-transform: uppercase;
+			padding-top: 1em;
+			font-weight: 900;
+		}
 
-    h2
-      text-align center
-      font-weight 500
+		h2 {
+			text-align: center;
+			font-weight: 500;
+		}
 
-    .container
-      width 100%
-      height 100%
-      display flex
-      flex-flow row nowrap
-      justify-content space-evenly
-      align-items center
-      position relative
+		.container {
+			width: 100%;
+			height: 100%;
+			display: flex;
+			flex-flow: row nowrap;
+			justify-content: space-evenly;
+			align-items: center;
+			position: relative;
 
-      .guidelines
-        max-width 45%
-        min-width 30%
-        display flex
-        flex-flow column nowrap
-        align-items center
-        transform scale(.9)
+			.guidelines {
+				max-width: 45%;
+				min-width: 30%;
+				display: flex;
+				flex-flow: column nowrap;
+				align-items: center;
+				transform: scale(0.9);
+			}
 
-      .rule
-        display flex
-        flex-flow row nowrap
+			.rule {
+				display: flex;
+				flex-flow: row nowrap;
 
-        span
-          display flex
-          flex 0 0 max-content
-          align-items center
-          font-size 2.2em
+				span {
+					display: flex;
+					flex: 0 0 max-content;
+					align-items: center;
+					font-size: 2.2em;
+				}
 
-        p
-          font-weight 300
-          text-transform uppercase
-          font-size 1.2rem
-          color rgba(#212121, .6)
-          padding 1em
+				p {
+					font-weight: 300;
+					text-transform: uppercase;
+					font-size: 1.2rem;
+					color: rgba(#212121, 0.6);
+					padding: 1em;
+				}
+			}
 
-      .sep
-        width 1px
-        height 70%
-        background linear-gradient(to top, lighten(#212121, 10%), darken(#212121, 10%))
+			.sep {
+				width: 1px;
+				height: 70%;
+				background: linear-gradient(to top, lighten(#212121, 10%), darken(#212121, 10%));
+			}
 
-      .swapping
-        width 45%
-        display flex
-        flex-flow column nowrap
-        justify-content center
+			.swapping {
+				width: 45%;
+				display: flex;
+				flex-flow: column nowrap;
+				justify-content: center;
+			}
 
-      input
-        background none
-        border none
-        border-bottom 2px solid #212121
-        width 80%
-        height 50px
-        font-weight 900
-        font-size 1.5em
-        padding 0 .3em
-        margin .5em 0
+			input {
+				background: none;
+				border: none;
+				border-bottom: 2px solid #212121;
+				width: 80%;
+				height: 50px;
+				font-weight: 900;
+				font-size: 1.5em;
+				padding: 0 0.3em;
+				margin: 0.5em 0;
 
-        &.x
-          padding 0 2em 0 .3em
+				&.x {
+					padding: 0 2em 0 0.3em;
+				}
 
-        &::placeholder
-          color darken(#ffb400, 30%)
-          font-weight 500
+				&::placeholder {
+					color: darken(#ffb400, 30%);
+					font-weight: 500;
+				}
+			}
 
-      .amount
-        display flex
-        flex-flow row nowrap
-        align-items center
+			.amount {
+				display: flex;
+				flex-flow: row nowrap;
+				align-items: center;
 
-        >span:first-of-type
-          color rgba(#212121, .8)
-          font-weight 900
-          transform translateX(-33px)
+				>span:first-of-type {
+					color: rgba(#212121, 0.8);
+					font-weight: 900;
+					transform: translateX(-33px);
+				}
 
-        >span:last-of-type
-          padding 10px
-          background #212121
-          color #ffb400
-          border-radius 2px
-          font-weight 500
-          cursor pointer
+				>span:last-of-type {
+					padding: 10px;
+					background: #212121;
+					color: #ffb400;
+					border-radius: 2px;
+					font-weight: 500;
+					cursor: pointer;
+				}
+			}
 
-      .confirm
-        display flex
-        flex-flow row nowrap
-        justify-content space-evenly
+			.confirm {
+				display: flex;
+				flex-flow: row nowrap;
+				justify-content: space-evenly;
 
-        >div
-          text-align center
-          align-self center
-          width 200px
-          padding .5em 0
-          border 2px solid #212121
-          border-radius 3px
-          text-transform uppercase
-          margin-top 2em
-          cursor pointer
-          transition all 125ms ease-in-out
+				>div {
+					text-align: center;
+					align-self: center;
+					width: 200px;
+					padding: 0.5em 0;
+					border: 2px solid #212121;
+					border-radius: 3px;
+					text-transform: uppercase;
+					margin-top: 2em;
+					cursor: pointer;
+					transition: all 125ms ease-in-out;
 
-          &:hover
-            background #212121
-            color #ffb400
+					&:hover {
+						background: #212121;
+						color: #ffb400;
+					}
+				}
+			}
 
-      .infos
-        display flex
-        flex-flow column nowrap
-        padding 2em 0
-        text-align end
-        padding-right 3em
+			.infos {
+				display: flex;
+				flex-flow: column nowrap;
+				padding: 2em 0;
+				text-align: end;
+				padding-right: 3em;
 
-        >:first-child
-          font-weight 300
+				>:first-child {
+					font-weight: 300;
 
-          >span:first-of-type
-            color darken(#F57F17, 40%)
-            font-weight 500
+					>span:first-of-type {
+						color: darken(#F57F17, 40%);
+						font-weight: 500;
+					}
 
-          >span:last-of-type
-            font-weight 500
+					>span:last-of-type {
+						font-weight: 500;
+					}
+				}
 
-        >:last-child
-          font-weight 300
+				>:last-child {
+					font-weight: 300;
 
-          >span:first-of-type
-            font-weight 100
+					>span:first-of-type {
+						font-weight: 100;
+					}
 
-          >span:last-of-type
-            color darken(#F57F17, 40%)
-            font-weight 500
+					>span:last-of-type {
+						color: darken(#F57F17, 40%);
+						font-weight: 500;
+					}
+				}
+			}
 
-      .coin
-        background rgba(black, .6)
-        position absolute
-        z-index 5
-        border-radius 50px
+			.coin {
+				background: rgba(black, 0.6);
+				position: absolute;
+				z-index: 5;
+				border-radius: 50px;
 
-        &.c1
-          transform translateY(10vh)
-          width 10px
-          height 10px
-          animation coin 5s ease-in infinite
+				&.c1 {
+					transform: translateY(10vh);
+					width: 10px;
+					height: 10px;
+					animation: coin 5s ease-in infinite;
+				}
 
-        &.c2
-          transform translateY(-10vh)
-          width 2px
-          height 2px
-          animation coin 3s ease-in 3s infinite
+				&.c2 {
+					transform: translateY(-10vh);
+					width: 2px;
+					height: 2px;
+					animation: coin 3s ease-in 3s infinite;
+				}
 
-        &.c3
-          transform translateY(5vh)
-          width 5px
-          height 5px
-          animation coin 8s ease-in 1s infinite
+				&.c3 {
+					transform: translateY(5vh);
+					width: 5px;
+					height: 5px;
+					animation: coin 8s ease-in 1s infinite;
+				}
 
-        &.c4
-          transform translateY(30vh)
-          width 12px
-          height 12px
-          animation coin 4s ease-in infinite
+				&.c4 {
+					transform: translateY(30vh);
+					width: 12px;
+					height: 12px;
+					animation: coin 4s ease-in infinite;
+				}
 
-        &.c5
-          transform translateY(-5vh)
-          width 10px
-          height 10px
-          animation coin 6.2s ease-in 200ms infinite
+				&.c5 {
+					transform: translateY(-5vh);
+					width: 10px;
+					height: 10px;
+					animation: coin 6.2s ease-in 200ms infinite;
+				}
 
-        &.c6
-          transform translateY(-32vh)
-          width 8px
-          height 8px
-          animation coin 3.2s ease-in infinite
+				&.c6 {
+					transform: translateY(-32vh);
+					width: 8px;
+					height: 8px;
+					animation: coin 3.2s ease-in infinite;
+				}
 
-        &.c7
-          transform translateY(-20vh)
-          width 10px
-          height 10px
-          animation coin 4.2s ease-in infinite
+				&.c7 {
+					transform: translateY(-20vh);
+					width: 10px;
+					height: 10px;
+					animation: coin 4.2s ease-in infinite;
+				}
+			}
+		}
+	}
+}
 
-@keyframes coin
-  from
-    left 0
-    opacity 1
+@keyframes coin {
+	from {
+		left: 0;
+		opacity: 1;
+	}
 
-  to
-    left 100%
-    opacity .3
+	to {
+		left: 100%;
+		opacity: 0.3;
+	}
+}
 </style>
