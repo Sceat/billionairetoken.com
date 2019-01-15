@@ -1,6 +1,6 @@
 <i18n>
 en:
-    swap: "The Billionaire Token swapping"
+    swap: "The Billionaire Token EOS Coin Swap"
 </i18n>
 
 <template lang="pug">
