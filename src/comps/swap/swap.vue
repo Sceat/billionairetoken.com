@@ -155,17 +155,12 @@ en:
 
 		onApprove() {
 			// Call approve on the XBL token with the SwapContrak address as receiver of the "approve"
-			if (this.metamask_installed == true) {
+			if (this.metamask_installed) {
 				this.metamask_user_address = web3.eth.accounts[0]
 				console.log("Account: " + this.metamask_user_address)
 			}
-			if (
-				this.amount != "" &&
-				this.metamask_user_address != null &&
-				this.metamask_installed == true
-			) {
+			if (this.amount && this.metamask_user_address && this.metamask_installed) {
 				const xbl_quantity = web3.toWei(parseInt(this.amount, 10), "ether")
-
 				this.approved = true
 				this.tokentoken
 					.approve(this.SwapContrak_ADDR, xbl_quantity, {
